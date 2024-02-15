@@ -1,2 +1,3 @@
 [submodule "sample_buggy_app"]
-	url = https://github.com/taufiqhusada/Movie_Info
+	path = sample_buggy_app
+	url = https://github.com/taufiqhusada/Movie_Info.git

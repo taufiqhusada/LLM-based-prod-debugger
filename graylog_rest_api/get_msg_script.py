@@ -1,6 +1,8 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+import csv
+from io import StringIO
 
 # Graylog API endpoint for searching logs
 graylog_api_url = "http://localhost:9000/api/views/search/messages"
@@ -26,7 +28,7 @@ search_params = {
     
     "timerange": {
         "type": "relative",
-        "range": 9000000
+        "range": 900
     },
 
     "fields_in_order": [
@@ -41,6 +43,13 @@ response = requests.post(graylog_api_url, headers=headers, auth=HTTPBasicAuth(us
 # Check if the request was successful
 if response.status_code == 200:
     # Print the response data
-    print(response.text)
+    csv_data = StringIO(response.text)
+    reader = csv.DictReader(csv_data)
+    json_response = json.dumps(list(reader))
+    
+    with open('log.json', 'w') as json_file:
+          json_file.write('{"data": ' + json_response + '}')
+
+    print("JSON response saved to 'log.json' file.")
 else:
     print(f"Error: {response.status_code} - {response.text}")

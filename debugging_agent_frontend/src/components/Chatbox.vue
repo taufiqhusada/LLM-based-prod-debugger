@@ -74,24 +74,26 @@ export default defineComponent({
 
 
             const requestBody = {
-                messages: this.mapChatMessagesToBackendFormat(this.chatMessages.slice(0, -1))
+                conversation: this.mapChatMessagesToBackendFormat(this.chatMessages.slice(0, -1)),
+                question: this.question,
+                source: "log"
             };
 
             this.question = '';
 
+            console.log(requestBody)
 
             try {
                 // Make a POST request to your API
-                const response = await axios.post(`${this.backendURL}/feedbacks/conversation`, requestBody);
+                const response = await axios.post(`${this.backendURL}/ask`, requestBody);
                 this.chatMessages.pop();
                 if (response.status === 200) {
                     // Update the feedback field with the response from GPT-4
+                    console.log(response.data)
+
                     this.scrollToBottom();
-                    const repliedMessage = response.data.data;
+                    const repliedMessage = response.data.response;
                     this.chatMessages.push({ content: repliedMessage, role: 'assistant', isTyping: false});
-                    if (this.chatMessages.length == 4) {
-                        this.chatMessages.push({ content: "Do you want to try saying this part again in a better way? I can give you feedback again based on that", role: 'assistant', isTyping: false });
-                    }
                 } else {
                     // Handle API response error
                     console.error('Failed to get chat from GPT-4:', response.status, response.data);
@@ -196,7 +198,6 @@ export default defineComponent({
     padding: 0.5rem 2rem;
     margin: 1rem;
     background: #FFF;
-    border-radius: 1.125rem 1.125rem 1.125rem 0;
     min-height: 2.25rem;
     width: fit-content;
     max-width: 66%;
@@ -206,11 +207,17 @@ export default defineComponent({
 }
 
 .message.user {
-    margin: 1rem 1rem 1rem auto;
-    border-radius: 1.125rem 1.125rem 0 1.125rem;
+    /* margin: 1rem 1rem 1rem auto; */
+    /* border-radius: 1.125rem 1.125rem 0 1.125rem; */
+    border-radius: 1.125rem 1.125rem 1.125rem 0;
     background: #333;
     /* You can update the color as needed */
     color: white;
+}
+
+.message.bot {
+    margin: 1rem 1rem 1rem auto;   
+    border-radius: 1.125rem 1.125rem 0 1.125rem;
 }
 
 .typing {

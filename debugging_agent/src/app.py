@@ -45,10 +45,10 @@ def do_conversation():
 
     chat_history = []
     for item in conversation:
-        if item["role"] == "human":
-            chat_history.append(HumanMessage(content=item["message"]))
+        if item["role"] == "user":
+            chat_history.append(HumanMessage(content=item["content"]))
         elif item["role"] == "assistant":
-            chat_history.append(AIMessage(content=item["message"]))
+            chat_history.append(AIMessage(content=item["content"]))
     
     retriever = None
     vectorstore = None

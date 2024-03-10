@@ -1,0 +1,10 @@
+Flask
+langchain 
+langchain-community 
+langchainhub 
+langchain-openai 
+chromadb 
+bs4
+jq
+esprima
+python-defer

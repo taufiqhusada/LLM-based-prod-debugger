@@ -17,6 +17,14 @@
         </div>
         <div class="input">
             <input type="text" v-model="question" placeholder="Type your question here!" @keyup.enter="sendMessage"  ref="questionInputRef"/>
+            <div class="dropdown m-2" @click="toggleDropdown">
+                <button class="btn btn-outline-dark">{{ dataSource ? dataSource : 'Data Source' }}</button>
+                <div class="dropdown-menu" v-show="isDropdownOpen">
+                    <a class="dropdown-item" @click="selectDropdownItem('log')"> Log </a>
+                    <a class="dropdown-item" @click="selectDropdownItem('code')"> Code </a>
+                    <a class="dropdown-item" @click="selectDropdownItem('none')"> None </a>
+                </div>
+            </div>
             <button @click="sendMessage" class="btn btn-primary">Send</button>
         </div>
     </div>
@@ -54,6 +62,7 @@ export default defineComponent({
             isDropdownOpen: ref(false),
             isPinStartClicked: ref(false),
             isPinEndClicked: ref(false),
+            dataSource: ref<string | null>(),
         };
     },
     methods: {
@@ -76,7 +85,7 @@ export default defineComponent({
             const requestBody = {
                 conversation: this.mapChatMessagesToBackendFormat(this.chatMessages.slice(0, -1)),
                 question: this.question,
-                source: "log"
+                source: this.dataSource,
             };
 
             this.question = '';
@@ -104,36 +113,14 @@ export default defineComponent({
                 console.error('Error while chatting with GPT-4:', error);
             }
 
+            this.dataSource = null
+
 
         },
 
         mapChatMessagesToBackendFormat(chatMessages: ChatMessage[]) {
             const chatMessagesWithoutTyping = chatMessages.map(({ isTyping,  dropdownItems, ...rest }) => rest);
             return chatMessagesWithoutTyping;
-        },
-
-        
-        async askGPT() {
-            this.showChatbox = true;
-
-            // Send initial message with a dropdown when chatbox is shown
-            this.chatMessages.push({
-                content: "Hi, what can I help you with?",
-                role: 'assistant',
-                isTyping: false,
-            });
-            this.chatMessages.push({
-                content: `Try asking these questions`,
-                role: 'assistant',
-                isTyping: false,
-                dropdownItems: [
-                    'How to improve this part?',
-                    'Could you give me example how to answer this using STAR method?',
-                    'How is my performance on this part?',
-                    'Could you give me example how to answer this better?',
-                    'What is good about this part?',
-                ] as string[]
-            });
         },
 
         scrollToBottom() {
@@ -144,6 +131,16 @@ export default defineComponent({
                 });
             }
         },
+
+        toggleDropdown() {
+            this.isDropdownOpen = !this.isDropdownOpen;
+        },
+
+        selectDropdownItem(selectedValue: string) {
+            this.dataSource = selectedValue;
+            console.log("masuk", this.dataSource)
+        },
+
     },
 
     watch: {
@@ -173,7 +170,7 @@ export default defineComponent({
     flex-direction: column;
     justify-content: space-between;
     max-width: 50%;
-    height: 80vh;
+    height: 75vh;
     z-index: 2;
     box-sizing: border-box;
     border-radius: 1rem;

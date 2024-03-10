@@ -60,7 +60,7 @@ def do_conversation():
 
     print(retriever, vectorstore)
 
-    llm = ChatOpenAI(model_name="gpt-4", temperature=0)
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
     qa_system_prompt = """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
 
@@ -125,7 +125,7 @@ def do_conversation():
 
     return jsonify({
         "response": response["answer"].content,
-        "docs": json.dumps([ob.__dict__ for ob in response["docs"]])
+        "docs": [json.dumps(ob.__dict__) for ob in response["docs"]]
     })
 
 if __name__ == '__main__':

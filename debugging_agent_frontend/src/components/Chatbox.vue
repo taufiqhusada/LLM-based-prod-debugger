@@ -1,39 +1,49 @@
 <template>
-    <div class="chat mt-3">
-        <div class="contact">
-            <div class="name">Debugging Agent</div>
-        </div>
-        <div id="chat-messages" class="messages" ref="messages">
-            <div v-for="(message, index) in chatMessages" :key="index">
-                <div :class="message.role === 'user' ? 'message user' : 'message bot'">
-                    <div v-if="message.role === 'assistant' && message.isTyping" class="typing">
-                        <div class="dot dot-1"></div>
-                        <div class="dot dot-2"></div>
-                        <div class="dot dot-3"></div>
+    <div class="row">
+        <div class="col-6">
+        <div class="chat mt-3">
+            <div class="contact">
+                <div class="name">Debugging Agent</div>
+            </div>
+            <div id="chat-messages" class="messages" ref="messages">
+                <div v-for="(message, index) in chatMessages" :key="index">
+                    <div :class="message.role === 'user' ? 'message user' : 'message bot'">
+                        <div v-if="message.role === 'assistant' && message.isTyping" class="typing">
+                            <div class="dot dot-1"></div>
+                            <div class="dot dot-2"></div>
+                            <div class="dot dot-3"></div>
+                        </div>
+                        <div v-else v-html="message.content"></div>
                     </div>
-                    <div v-else v-html="message.content"></div>
                 </div>
             </div>
-        </div>
-        <div class="input">
-            <input type="text" v-model="question" placeholder="Type your question here!" @keyup.enter="sendMessage"  ref="questionInputRef"/>
-            <div class="dropdown m-2" @click="toggleDropdown">
-                <button class="btn btn-outline-dark">{{ dataSource ? dataSource : 'Data Source' }}</button>
-                <div class="dropdown-menu" v-show="isDropdownOpen">
-                    <a class="dropdown-item" @click="selectDropdownItem('log')"> Log </a>
-                    <a class="dropdown-item" @click="selectDropdownItem('code')"> Code </a>
-                    <a class="dropdown-item" @click="selectDropdownItem('none')"> None </a>
+            <div class="input">
+                <input type="text" v-model="question" placeholder="Type your question here!" @keyup.enter="sendMessage"
+                    ref="questionInputRef" />
+                <div class="dropdown m-2" @click="toggleDropdown">
+                    <button class="btn btn-outline-dark">{{ dataSource ? dataSource : 'Data Source' }}</button>
+                    <div class="dropdown-menu" v-show="isDropdownOpen">
+                        <a class="dropdown-item" @click="selectDropdownItem('log')"> Log </a>
+                        <a class="dropdown-item" @click="selectDropdownItem('code')"> Code </a>
+                        <a class="dropdown-item" @click="selectDropdownItem('none')"> None </a>
+                    </div>
                 </div>
+                <button @click="sendMessage" class="btn btn-primary">Send</button>
             </div>
-            <button @click="sendMessage" class="btn btn-primary">Send</button>
         </div>
     </div>
+        <div class="col-6">
+            <ReferenceBox :showBox="true" :docs="referenceDocs"></ReferenceBox>
+        </div>
+    </div>
+
 </template>
-  
-  
+
+
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
+import ReferenceBox from './ReferenceBox.vue';
 
 
 interface ChatMessage {
@@ -50,6 +60,9 @@ interface ChatMessageBackend {
 
 
 export default defineComponent({
+    components: {
+        ReferenceBox,
+    },
     data() {
         return {
             question: ref<string>(''),
@@ -63,6 +76,7 @@ export default defineComponent({
             isPinStartClicked: ref(false),
             isPinEndClicked: ref(false),
             dataSource: ref<string | null>(),
+            referenceDocs: ref<Array<string>>([]),
         };
     },
     methods: {
@@ -99,10 +113,12 @@ export default defineComponent({
                 if (response.status === 200) {
                     // Update the feedback field with the response from GPT-4
                     console.log(response.data)
-
+                    
                     this.scrollToBottom();
                     const repliedMessage = response.data.response;
-                    this.chatMessages.push({ content: repliedMessage, role: 'assistant', isTyping: false});
+                    this.chatMessages.push({ content: repliedMessage, role: 'assistant', isTyping: false });
+
+                    this.referenceDocs = response.data.docs.reverse()
                 } else {
                     // Handle API response error
                     console.error('Failed to get chat from GPT-4:', response.status, response.data);
@@ -119,7 +135,7 @@ export default defineComponent({
         },
 
         mapChatMessagesToBackendFormat(chatMessages: ChatMessage[]) {
-            const chatMessagesWithoutTyping = chatMessages.map(({ isTyping,  dropdownItems, ...rest }) => rest);
+            const chatMessagesWithoutTyping = chatMessages.map(({ isTyping, dropdownItems, ...rest }) => rest);
             return chatMessagesWithoutTyping;
         },
 
@@ -144,11 +160,11 @@ export default defineComponent({
     },
 
     watch: {
-       
+
     },
 });
 </script>
-  
+
 <style scoped>
 .contact {
     position: relative;
@@ -169,7 +185,7 @@ export default defineComponent({
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    max-width: 50%;
+    max-width: 100%;
     height: 75vh;
     z-index: 2;
     box-sizing: border-box;
@@ -182,7 +198,7 @@ export default defineComponent({
     /* padding: 6rem; */
     background: #F7F7F7;
     /* You can update the background color as needed */
-    flex-shrink: 10;  
+    flex-shrink: 10;
     overflow-y: auto;
     height: 50rem;
     box-shadow:
@@ -213,7 +229,7 @@ export default defineComponent({
 }
 
 .message.bot {
-    margin: 1rem 1rem 1rem auto;   
+    margin: 1rem 1rem 1rem auto;
     border-radius: 1.125rem 1.125rem 0 1.125rem;
 }
 
@@ -366,32 +382,36 @@ input::placeholder {
 }
 
 @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
 
 /* Apply the animation to the chatbox */
 .message {
     animation: fadeIn 0.5s ease-in-out;
 }
+
 .input-group {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .time-input {
-  flex-grow: 1;
-  border: none; /* Remove input border */
+    flex-grow: 1;
+    border: none;
+    /* Remove input border */
 }
 
 .input-group-btn {
-  padding: 0; /* Remove padding */
-  
-  border: none;
+    padding: 0;
+    /* Remove padding */
+
+    border: none;
     background-image: none;
     padding: 0.1rem;
     border-radius: 1.125rem;
@@ -399,10 +419,10 @@ input::placeholder {
 }
 
 .pin-button {
-  padding: 0.375rem 0.75rem;
-  margin-right: -1px;
-  border-top-left-radius: 1.125rem;
-  border-bottom-left-radius: 1.125rem;
+    padding: 0.375rem 0.75rem;
+    margin-right: -1px;
+    border-top-left-radius: 1.125rem;
+    border-bottom-left-radius: 1.125rem;
 }
 
 .pin-button-clicked {
@@ -410,11 +430,13 @@ input::placeholder {
 }
 
 .pin-button:hover {
-  background-color: #e2e6ea; /* Slightly different background on hover/focus for feedback */
+    background-color: #e2e6ea;
+    /* Slightly different background on hover/focus for feedback */
 }
 
 .pin-icon {
-  width: 16px; /* Or any other size */
-  height: auto;
+    width: 16px;
+    /* Or any other size */
+    height: auto;
 }
 </style>

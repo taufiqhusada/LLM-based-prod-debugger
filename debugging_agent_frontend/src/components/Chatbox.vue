@@ -13,7 +13,13 @@
                             <div class="dot dot-2"></div>
                             <div class="dot dot-3"></div>
                         </div>
-                        <div v-else v-html="message.content"></div>
+                        <div v-else>
+                            <span v-html="message.content"></span>
+                            <!-- Conditionally render and make clickable reference link -->
+                            <br>
+                            <a v-if="message.showReference" @click="showReference">See reference</a>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -33,7 +39,7 @@
         </div>
     </div>
         <div class="col-6">
-            <ReferenceBox :showBox="true" :docs="referenceDocs"></ReferenceBox>
+            <ReferenceBox :showBox="showBox" :docs="referenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
         </div>
     </div>
 
@@ -51,12 +57,21 @@ interface ChatMessage {
     role: 'user' | 'assistant';
     isTyping?: boolean;
     dropdownItems?: string[];
+    showReference?: boolean;
 }
 
 interface ChatMessageBackend {
     content: string;
     role: 'user' | 'assistant';
 }
+
+type ReferenceDocs = {
+  content: string;
+  metadata: string;
+  source: string;
+  type: string;
+};
+
 
 
 export default defineComponent({
@@ -76,7 +91,8 @@ export default defineComponent({
             isPinStartClicked: ref(false),
             isPinEndClicked: ref(false),
             dataSource: ref<string | null>(),
-            referenceDocs: ref<Array<string>>([]),
+            referenceDocs: ref<ReferenceDocs>(),
+            showBox: ref<boolean>(false)
         };
     },
     methods: {
@@ -116,9 +132,16 @@ export default defineComponent({
                     
                     this.scrollToBottom();
                     const repliedMessage = response.data.response;
-                    this.chatMessages.push({ content: repliedMessage, role: 'assistant', isTyping: false });
+                    this.chatMessages.push({ content: repliedMessage, role: 'assistant', isTyping: false, showReference: true,});
 
-                    this.referenceDocs = response.data.docs.reverse()
+                    let docs = JSON.parse(response.data.docs[0])
+
+                    this.referenceDocs = {
+                        content: docs["page_content"],
+                        metadata: docs["metadata"],
+                        source: response.data.sources,
+                        type: response.data.type,
+                    };
                 } else {
                     // Handle API response error
                     console.error('Failed to get chat from GPT-4:', response.status, response.data);
@@ -156,7 +179,14 @@ export default defineComponent({
             this.dataSource = selectedValue;
             console.log("masuk", this.dataSource)
         },
+        
+        showReference(){
+            this.showBox = true;
+        },
 
+        closeReferenceBox() {
+            this.showBox = false;
+        }
     },
 
     watch: {
@@ -438,5 +468,10 @@ input::placeholder {
     width: 16px;
     /* Or any other size */
     height: auto;
+}
+
+.message a {
+    text-decoration: underline;
+    color: blue; 
 }
 </style>

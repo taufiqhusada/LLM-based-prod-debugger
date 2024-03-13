@@ -14,7 +14,12 @@ from langchain_community.document_loaders.generic import GenericLoader
 from langchain_community.document_loaders.parsers import LanguageParser
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
+
+
 
 def load_vectorstore_codebase():
     repo_path = "/Users/taufiq/Documents/Research/prod debugger/sample_buggy_app"
@@ -29,14 +34,15 @@ def load_vectorstore_codebase():
     
 
     python_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.PYTHON, chunk_size=2000, chunk_overlap=200
+        language=Language.JS, chunk_size=1000, chunk_overlap=200
     )
     texts = python_splitter.split_documents(documents)
    
 
-    vectorstore = Chroma.from_documents(texts, OpenAIEmbeddings(disallowed_special=()))
+    # vectorstore = Chroma.from_documents(texts, embedding_fuction=HuggingFaceEmbeddings(model_name = "sentence-transformers/all-MiniLM-L6-v2"), persist_directory="./chroma_db/codebase/sentence-transformer")
+    vectorstore = Chroma.from_documents(texts, embedding=OpenAIEmbeddings(), persist_directory="./chroma_db/codebase/openai")
     retriever = vectorstore.as_retriever(
         search_type="mmr",  # Also test "similarity"
-        search_kwargs={"k": 8},
+        search_kwargs={"k": 4},
     )
     return retriever, vectorstore

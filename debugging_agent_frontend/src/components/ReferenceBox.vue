@@ -1,27 +1,48 @@
 <template>
-    <section  v-if="showBox && docs"  ref="chatArea" class="chat-area">
-        <div v-for="(doc, index) in docs" :key="index" class="message message-in content-formatter">
+    <section v-if="showBox && docs" ref="chatArea" class="chat-area">
+        <button class="close-button" @click="closeBox">×</button>
+        <div class="message message-in content-formatter">
             <div class="message-container">
-            <div class="content">
-                <pre>{{ JSON.parse(doc) }}</pre>
-            </div>
+                <div v-if="docs.type == 'log'" class="content">
+                    <pre><b>source:</b> {{docs.source}}</pre>
+                    <pre><b>content:</b> {{docs.content}}</pre>
+                    <pre><b>metadata:</b> {{docs.metadata}}</pre>
+                </div>
+                <div v-if="docs.type == 'code'" class="content">
+                    <pre><b>source:</b> {{docs.source}}</pre>
+                    <pre><b>content:</b> {{docs.content}}</pre>
+                </div>
             </div>
         </div>
     </section>
 </template>
 
 
+
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+
+type ReferenceDocs = {
+  content: string;
+  metadata: string;
+  source: string;
+  type: string;
+};
 
 export default defineComponent({
     props: {
         docs: {
-            type: Array<string>,
+            type: Object as () => ReferenceDocs,
         },
         showBox: {
             type: Boolean,
+            required: true,
             default: false,
+        }
+    },
+    methods: {
+        closeBox() {
+            this.$emit('close-box'); // Emit an event to notify the parent component to close the box
         }
     }
 });
@@ -106,6 +127,19 @@ export default defineComponent({
 .content-formatter {
     overflow-x: auto; /* or overflow-x: scroll; */
   white-space: nowrap; 
+}
+
+.close-button {
+  position: absolute;
+  top: 5px; /* Adjust the top position as needed */
+  right: 10px; /* Adjust the right position as needed */
+  border: none;
+  background: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  z-index: 1; /* Ensure the close button is above the content */
 }
 
 

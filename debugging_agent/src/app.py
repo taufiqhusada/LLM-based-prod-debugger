@@ -2,7 +2,7 @@
 from flask import Blueprint, request, jsonify
 import os
 from flask import Flask
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import bs4
 from langchain import hub
@@ -12,6 +12,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
+from langchain_community.llms import Ollama
 
 from langchain_core.messages import AIMessage, HumanMessage,  get_buffer_string
 
@@ -35,8 +37,8 @@ def hello():
 
 @app.route('/ask', methods=['POST'])
 def do_conversation():
-    # set_verbose(True)
-    # set_debug(True)
+    set_verbose(True)
+    set_debug(True)
     data = request.json
 
     conversation = data['conversation']
@@ -63,10 +65,11 @@ def do_conversation():
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
     qa_system_prompt = """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+                            ALWAYS return a "SOURCES" part in your answer.
 
                             Question: {question} 
 
-                            Context: {context} 
+                            Context: {summaries} 
 
                             Answer:"""
 
@@ -111,21 +114,32 @@ def do_conversation():
     }
 
     # And now we put it all together!
-    final_chain = _inputs | retrieved_documents | answer
+    final_chain = _inputs #| retrieved_documents | answer
 
     
-    response = final_chain.invoke({
+    condensed_question = final_chain.invoke({
         "question": question,
         "chat_history":chat_history,
     })
 
+    print(condensed_question)
+
+    PROMPT = PromptTemplate(
+        template=qa_system_prompt, input_variables=["summaries", "question"]
+    )
+    qa_sources = RetrievalQAWithSourcesChain.from_chain_type(llm, retriever = retriever,return_source_documents=True)
+
+    response = qa_sources.invoke({"question": condensed_question['standalone_question']})
+
     vectorstore.delete_collection()
 
-    print(response)
+    # print(response)
 
     return jsonify({
-        "response": response["answer"].content,
-        "docs": [json.dumps(ob.__dict__) for ob in response["docs"]]
+        "response": response["answer"],
+        "sources": response["sources"],
+        "docs": [json.dumps(ob.__dict__) for ob in response["source_documents"] if ob.metadata.get("source") == response["sources"]],
+        "type":source
     })
 
 if __name__ == '__main__':

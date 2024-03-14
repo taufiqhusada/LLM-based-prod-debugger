@@ -17,7 +17,7 @@
                             <span v-html="message.content"></span>
                             <!-- Conditionally render and make clickable reference link -->
                             <br>
-                            <a v-if="message.showReference" @click="showReference">See reference</a>
+                            <a v-if="message.showReference" @click="showReference(Math.floor(index/2))">See reference</a>
                         </div>
 
                     </div>
@@ -39,7 +39,7 @@
         </div>
     </div>
         <div class="col-6">
-            <ReferenceBox :showBox="showBox" :docs="referenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
+            <ReferenceBox :showBox="showBox" :docs="currReferenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
         </div>
     </div>
 
@@ -91,7 +91,8 @@ export default defineComponent({
             isPinStartClicked: ref(false),
             isPinEndClicked: ref(false),
             dataSource: ref<string | null>(),
-            referenceDocs: ref<ReferenceDocs>(),
+            referenceDocs: ref<Array<ReferenceDocs>>([]),
+            currReferenceDocs: ref<ReferenceDocs>(),
             showBox: ref<boolean>(false)
         };
     },
@@ -136,12 +137,12 @@ export default defineComponent({
 
                     let docs = JSON.parse(response.data.docs[0])
 
-                    this.referenceDocs = {
+                    this.referenceDocs.push({
                         content: docs["page_content"],
                         metadata: docs["metadata"],
                         source: response.data.sources,
                         type: response.data.type,
-                    };
+                    });
                 } else {
                     // Handle API response error
                     console.error('Failed to get chat from GPT-4:', response.status, response.data);
@@ -180,8 +181,11 @@ export default defineComponent({
             console.log("masuk", this.dataSource)
         },
         
-        showReference(){
+        showReference(index: number){
+            console.log(index)
+            console.log(this.referenceDocs)
             this.showBox = true;
+            this.currReferenceDocs = this.referenceDocs[index]
         },
 
         closeReferenceBox() {

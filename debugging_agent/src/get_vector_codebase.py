@@ -43,6 +43,6 @@ def load_vectorstore_codebase():
     vectorstore = Chroma.from_documents(texts, embedding=OpenAIEmbeddings(), persist_directory="./chroma_db/codebase/openai")
     retriever = vectorstore.as_retriever(
         search_type="mmr",  # Also test "similarity"
-        search_kwargs={"k": 4},
+        search_kwargs={"k": 8},
     )
     return retriever, vectorstore

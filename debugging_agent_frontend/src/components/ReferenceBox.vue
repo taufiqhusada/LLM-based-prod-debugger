@@ -8,9 +8,14 @@
                     <pre><b>content:</b> {{docs.content}}</pre>
                     <pre><b>metadata:</b> {{docs.metadata}}</pre>
                 </div>
-                <div v-if="docs.type == 'code'" class="content">
+                <div v-if="docs.type == 'code'" class="content code">
                     <pre><b>source:</b> {{docs.source}}</pre>
-                    <pre><b>content:</b> {{docs.content}}</pre>
+                    <VCodeBlock
+                        :code="docs.content"
+                        highlightjs
+                        lang="javascript"
+                        theme="github"
+                    />
                 </div>
             </div>
         </div>
@@ -21,6 +26,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import VCodeBlock from '@wdns/vue-code-block';
 
 type ReferenceDocs = {
   content: string;
@@ -44,7 +50,10 @@ export default defineComponent({
         closeBox() {
             this.$emit('close-box'); // Emit an event to notify the parent component to close the box
         }
-    }
+    },
+    components: {
+        VCodeBlock,
+    },
 });
 </script>
 
@@ -121,6 +130,10 @@ export default defineComponent({
 }
 
 .content {
+  flex-grow: 1;
+}
+
+.content.code {
   flex-grow: 1;
 }
 

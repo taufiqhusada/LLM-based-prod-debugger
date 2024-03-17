@@ -17,7 +17,7 @@
                             <span v-html="message.content"></span>
                             <!-- Conditionally render and make clickable reference link -->
                             <br>
-                            <a v-if="message.showReference" @click="showReference">See reference</a>
+                            <a v-if="message.showReference" @click="showReference(Math.floor(index/2))">See reference</a>
                         </div>
 
                     </div>
@@ -37,9 +37,13 @@
                 <button @click="sendMessage" class="btn btn-primary">Send</button>
             </div>
         </div>
+        <div class="refresh-container mt-4">
+            <button @click="refreshLogs" class="btn btn-outline-primary">Refresh Logs</button>
+            <p v-if="lastRefreshAt != ''" class="mt-2">Last refreshed at {{ lastRefreshAt }}</p>
+        </div>
     </div>
         <div class="col-6">
-            <ReferenceBox :showBox="showBox" :docs="referenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
+            <ReferenceBox :showBox="showBox" :docs="currReferenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
         </div>
     </div>
 
@@ -51,6 +55,10 @@ import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import ReferenceBox from './ReferenceBox.vue';
 
+
+interface Metadata {
+  [key: string]: string; // Or whatever type your values are
+}
 
 interface ChatMessage {
     content: string;
@@ -67,7 +75,7 @@ interface ChatMessageBackend {
 
 type ReferenceDocs = {
   content: string;
-  metadata: string;
+  metadata: Metadata;
   source: string;
   type: string;
 };
@@ -91,8 +99,10 @@ export default defineComponent({
             isPinStartClicked: ref(false),
             isPinEndClicked: ref(false),
             dataSource: ref<string | null>(),
-            referenceDocs: ref<ReferenceDocs>(),
-            showBox: ref<boolean>(false)
+            referenceDocs: ref<Array<ReferenceDocs>>([]),
+            currReferenceDocs: ref<ReferenceDocs>(),
+            showBox: ref<boolean>(false),
+            lastRefreshAt: ref<string>("")
         };
     },
     methods: {
@@ -136,12 +146,12 @@ export default defineComponent({
 
                     let docs = JSON.parse(response.data.docs[0])
 
-                    this.referenceDocs = {
+                    this.referenceDocs.push({
                         content: docs["page_content"],
                         metadata: docs["metadata"],
                         source: response.data.sources,
                         type: response.data.type,
-                    };
+                    });
                 } else {
                     // Handle API response error
                     console.error('Failed to get chat from GPT-4:', response.status, response.data);
@@ -180,12 +190,36 @@ export default defineComponent({
             console.log("masuk", this.dataSource)
         },
         
-        showReference(){
+        showReference(index: number){
+            console.log(index)
+            console.log(this.referenceDocs)
             this.showBox = true;
+            this.currReferenceDocs = this.referenceDocs[index]
         },
 
         closeReferenceBox() {
             this.showBox = false;
+        },
+
+        async refreshLogs() {
+            try {
+                const response = await axios.get(`${this.backendURL}/logs/refresh`);
+                this.chatMessages.pop();
+                if (response.status === 200) {
+                    console.log(response.data)
+                    
+                    const now = new Date();
+                    this.lastRefreshAt = now.toLocaleDateString() + ":" + now.getHours() + ":" + now.getMinutes() +  ":" + now.getSeconds();
+                } else {
+                    // Handle API response error
+                    console.error('Failed to refresh:', response.status, response.data);
+                    this.scrollToBottom();
+                }
+            } catch (error) {
+                // Handle network or other errors
+                console.error('Error4:', error);
+            }
+   
         }
     },
 
@@ -473,5 +507,11 @@ input::placeholder {
 .message a {
     text-decoration: underline;
     color: blue; 
+}
+
+.refresh-container {
+    display: flex; /* This turns the container into a flex container */
+    align-items: center; /* This vertically centers the children */
+    gap: 10px; /* This adds some space between the children */
 }
 </style>

@@ -34,15 +34,20 @@ def load_vectorstore_codebase():
     
 
     python_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.JS, chunk_size=1000, chunk_overlap=200
+        language=Language.JS, chunk_size=1000, chunk_overlap=200,  add_start_index = True
     )
     texts = python_splitter.split_documents(documents)
+
+    identifier = 0
+    for t in texts:
+        t.metadata.update({"source": t.metadata.get("source") + "_chunk_" + str(identifier)})
+        identifier+=1
    
 
     # vectorstore = Chroma.from_documents(texts, embedding_fuction=HuggingFaceEmbeddings(model_name = "sentence-transformers/all-MiniLM-L6-v2"), persist_directory="./chroma_db/codebase/sentence-transformer")
     vectorstore = Chroma.from_documents(texts, embedding=OpenAIEmbeddings(), persist_directory="./chroma_db/codebase/openai")
     retriever = vectorstore.as_retriever(
         search_type="mmr",  # Also test "similarity"
-        search_kwargs={"k": 4},
+        search_kwargs={"k": 8},
     )
     return retriever, vectorstore

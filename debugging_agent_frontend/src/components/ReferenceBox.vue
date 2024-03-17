@@ -7,10 +7,16 @@
                     <pre><b>source:</b> {{docs.source}}</pre>
                     <pre><b>content:</b> {{docs.content}}</pre>
                     <pre><b>metadata:</b> {{docs.metadata}}</pre>
+                    <pre><b>link:</b> <a :href="`http://localhost:9000/search?q=gl2_message_id%3A${docs.metadata['gl2_message_id']}&rangetype=relative&relative=0`" target="_blank">{{docs.metadata["gl2_message_id"]}}</a></pre>
                 </div>
-                <div v-if="docs.type == 'code'" class="content">
+                <div v-if="docs.type == 'code'" class="content code">
                     <pre><b>source:</b> {{docs.source}}</pre>
-                    <pre><b>content:</b> {{docs.content}}</pre>
+                    <VCodeBlock
+                        :code="docs.content"
+                        highlightjs
+                        lang="javascript"
+                        theme="github"
+                    />
                 </div>
             </div>
         </div>
@@ -21,10 +27,15 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import VCodeBlock from '@wdns/vue-code-block';
+
+interface Metadata {
+  [key: string]: string; // Or whatever type your values are
+}
 
 type ReferenceDocs = {
   content: string;
-  metadata: string;
+  metadata: Metadata;
   source: string;
   type: string;
 };
@@ -44,7 +55,10 @@ export default defineComponent({
         closeBox() {
             this.$emit('close-box'); // Emit an event to notify the parent component to close the box
         }
-    }
+    },
+    components: {
+        VCodeBlock,
+    },
 });
 </script>
 
@@ -121,6 +135,10 @@ export default defineComponent({
 }
 
 .content {
+  flex-grow: 1;
+}
+
+.content.code {
   flex-grow: 1;
 }
 

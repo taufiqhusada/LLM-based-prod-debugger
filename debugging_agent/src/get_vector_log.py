@@ -23,6 +23,7 @@ def load_vectorstore_log():
         metadata["searchTerm"] = record.get("searchTerm")
         metadata["error"] = record.get("error")
         metadata["level"] = record.get("level")
+        metadata["gl2_message_id"] = record.get("gl2_message_id")
 
 
         return metadata

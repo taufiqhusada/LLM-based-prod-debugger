@@ -37,6 +37,10 @@
                 <button @click="sendMessage" class="btn btn-primary">Send</button>
             </div>
         </div>
+        <div class="refresh-container mt-4">
+            <button @click="refreshLogs" class="btn btn-outline-primary">Refresh Logs</button>
+            <p v-if="lastRefreshAt != ''" class="mt-2">Last refreshed at {{ lastRefreshAt }}</p>
+        </div>
     </div>
         <div class="col-6">
             <ReferenceBox :showBox="showBox" :docs="currReferenceDocs" @close-box="closeReferenceBox"></ReferenceBox>
@@ -97,7 +101,8 @@ export default defineComponent({
             dataSource: ref<string | null>(),
             referenceDocs: ref<Array<ReferenceDocs>>([]),
             currReferenceDocs: ref<ReferenceDocs>(),
-            showBox: ref<boolean>(false)
+            showBox: ref<boolean>(false),
+            lastRefreshAt: ref<string>("")
         };
     },
     methods: {
@@ -194,6 +199,27 @@ export default defineComponent({
 
         closeReferenceBox() {
             this.showBox = false;
+        },
+
+        async refreshLogs() {
+            try {
+                const response = await axios.get(`${this.backendURL}/logs/refresh`);
+                this.chatMessages.pop();
+                if (response.status === 200) {
+                    console.log(response.data)
+                    
+                    const now = new Date();
+                    this.lastRefreshAt = now.toLocaleDateString() + ":" + now.getHours() + ":" + now.getMinutes() +  ":" + now.getSeconds();
+                } else {
+                    // Handle API response error
+                    console.error('Failed to refresh:', response.status, response.data);
+                    this.scrollToBottom();
+                }
+            } catch (error) {
+                // Handle network or other errors
+                console.error('Error4:', error);
+            }
+   
         }
     },
 
@@ -481,5 +507,11 @@ input::placeholder {
 .message a {
     text-decoration: underline;
     color: blue; 
+}
+
+.refresh-container {
+    display: flex; /* This turns the container into a flex container */
+    align-items: center; /* This vertically centers the children */
+    gap: 10px; /* This adds some space between the children */
 }
 </style>

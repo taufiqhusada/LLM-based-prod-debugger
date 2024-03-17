@@ -29,7 +29,7 @@ def get_recent_logs():
         
         "timerange": {
             "type": "relative",
-            "range": 900
+            "range": 3600
         },
 
         "fields_in_order": [

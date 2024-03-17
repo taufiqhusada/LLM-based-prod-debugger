@@ -52,6 +52,10 @@ import axios from 'axios';
 import ReferenceBox from './ReferenceBox.vue';
 
 
+interface Metadata {
+  [key: string]: string; // Or whatever type your values are
+}
+
 interface ChatMessage {
     content: string;
     role: 'user' | 'assistant';
@@ -67,7 +71,7 @@ interface ChatMessageBackend {
 
 type ReferenceDocs = {
   content: string;
-  metadata: string;
+  metadata: Metadata;
   source: string;
   type: string;
 };

@@ -19,6 +19,7 @@ from langchain_core.messages import AIMessage, HumanMessage,  get_buffer_string
 
 from get_vector_log import load_vectorstore_log
 from get_vector_codebase import load_vectorstore_codebase
+from get_log_script import get_recent_logs
 
 from defer import defer
 
@@ -141,6 +142,14 @@ def do_conversation():
         "docs": [json.dumps(ob.__dict__) for ob in response["source_documents"] if ob.metadata.get("source") == response["sources"]],
         "type":source
     })
+
+@app.route('/logs/refresh', methods=['GET'])
+def refresh_logs():
+    res = get_recent_logs()
+    return jsonify({
+        "response": res,
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True)

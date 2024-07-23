@@ -5,4 +5,6 @@ Built with Python, Flask, LangChain, Vue.js, Graylog, TypeScript, HTML, and CSS.
 
 This is part of the class project "Advanced Topic in Software Engineering" (CS6704 VT)
 
-Read the paper [here](LLM_for_debugging_production (12).pdf)
+Read the paper [here](LLM_for_debugging_production_paper.pdf)
+
+Watch the video demo [here](https://www.youtube.com/watch?v=uVpE5UtEcNI)
